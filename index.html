@@ -5,166 +5,223 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Namma Koli Mandi — Daily Poultry Rates</title>
 <style>
-  :root { --g:#065f46; --g2:#ecfdf5; --bg:#f8fafc; --tx:#0f172a; --mut:#64748b; --bd:#e2e8f0; --up:#15803d; --dn:#b91c1c; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Kannada", sans-serif; background:var(--bg); color:var(--tx); }
-  header { background:var(--g); color:#fff; padding:18px 16px; }
-  header h1 { margin:0; font-size:1.4rem; }
-  header p { margin:4px 0 0; opacity:.85; font-size:.9rem; }
-  main { max-width:960px; margin:0 auto; padding:14px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
-  button, select, input { font:inherit; padding:8px 12px; border:1px solid var(--bd); border-radius:8px; background:#fff; }
-  button { cursor:pointer; }
-  button.on { background:var(--g); color:#fff; border-color:var(--g); }
-  input { flex:1; min-width:160px; }
-  .home { background:var(--g2); border:1px solid #a7f3d0; border-radius:12px; padding:14px; margin-bottom:14px; }
-  .home h2 { margin:0 0 8px; font-size:1.05rem; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; }
-  .box { background:#fff; border-radius:8px; padding:8px 10px; border:1px solid var(--bd); }
-  .box small { color:var(--mut); display:block; font-size:.72rem; }
-  .box b { font-size:1.2rem; }
-  .wrap { overflow-x:auto; background:#fff; border:1px solid var(--bd); border-radius:12px; }
-  table { border-collapse:collapse; width:100%; min-width:560px; }
-  th, td { padding:10px 12px; text-align:right; border-bottom:1px solid var(--bd); white-space:nowrap; }
-  th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:#fff; }
-  th { background:#f1f5f9; font-size:.78rem; color:var(--mut); text-transform:uppercase; }
-  tr.home-row td { background:var(--g2); }
+  :root { --g:#065f46; --g2:#ecfdf5; --bg:#f3f6f4; --card:#fff; --tx:#0f172a; --mut:#64748b; --bd:#e5e7eb; --up:#15803d; --dn:#b91c1c; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-size:16px; line-height:1.4; font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Kannada",sans-serif; background:var(--bg); color:var(--tx); }
+  header { background:var(--g); color:#fff; padding:22px 18px 26px; }
+  .head { max-width:720px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  header h1 { margin:0; font-size:1.5rem; }
+  header p { margin:6px 0 0; opacity:.9; font-size:.95rem; }
+  #lang { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:999px; padding:8px 14px; font:inherit; font-size:.9rem; white-space:nowrap; }
+  main { max-width:720px; margin:0 auto; padding:18px 16px 8px; }
+  .home { background:var(--card); border-radius:20px; padding:20px; box-shadow:0 2px 12px rgba(6,95,70,.12); border:2px solid #a7f3d0; margin-bottom:22px; }
+  .home h2 { margin:0; font-size:1rem; color:var(--g); }
+  .home .big { font-size:2.6rem; font-weight:800; margin:6px 0 2px; }
+  .mini { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .mini div { background:#f8fafc; border-radius:12px; padding:10px 12px; }
+  .mini small { display:block; color:var(--mut); font-size:.72rem; }
+  .mini b { font-size:1.05rem; }
+  #search { width:100%; height:50px; font:inherit; padding:0 16px; border:1px solid var(--bd); border-radius:14px; background:#fff; margin-bottom:14px; }
+  .chips { display:flex; gap:10px; overflow-x:auto; padding:2px 0 12px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chips button { flex:none; border:1px solid var(--bd); background:#fff; border-radius:999px; padding:10px 18px; font:inherit; }
+  .chips button.on { background:var(--g); color:#fff; border-color:var(--g); }
+  .tools { display:flex; gap:10px; margin:4px 0 18px; }
+  .tools select, .tools button { flex:1; height:46px; font:inherit; font-size:.95rem; border:1px solid var(--bd); border-radius:12px; background:#fff; padding:0 12px; }
+  .count { color:var(--mut); font-size:.85rem; margin:0 4px 10px; }
+  .list { display:grid; gap:14px; }
+  .card { background:var(--card); border-radius:18px; padding:16px 18px; box-shadow:0 1px 6px rgba(15,23,42,.06); }
+  .card.is-home { border:2px solid #a7f3d0; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .name { font-weight:650; font-size:1.05rem; }
+  .state { color:var(--mut); font-size:.8rem; margin-top:2px; }
+  .price { text-align:right; }
+  .price b { font-size:1.7rem; font-weight:800; display:block; line-height:1.1; }
   .up { color:var(--up); } .dn { color:var(--dn); } .same { color:var(--mut); }
-  .sub { color:var(--mut); font-size:.75rem; display:block; }
-  footer { text-align:center; color:var(--mut); font-size:.8rem; padding:20px 14px; }
-  #empty { padding:20px; text-align:center; color:var(--mut); display:none; }
+  .chg { font-size:.85rem; font-weight:600; }
+  .card .mini { margin-top:12px; }
+  #empty { text-align:center; color:var(--mut); padding:30px 0; display:none; }
+  #status { text-align:center; color:var(--mut); font-size:.85rem; padding:22px 16px 6px; }
+  #status.bad { color:var(--dn); font-weight:600; }
+  footer { text-align:center; color:var(--mut); font-size:.8rem; padding:6px 16px 36px; }
+  @media (min-width:700px) { .list { grid-template-columns:1fr 1fr; } }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>🐔 Namma Koli Mandi</h1>
-  <p id="sub">Daily broiler rates — <span id="date"></span></p>
+  <div class="head">
+    <div>
+      <h1>🐔 Namma Koli Mandi</h1>
+      <p id="sub">Daily broiler rates</p>
+    </div>
+    <button id="lang" type="button">ಕನ್ನಡ / EN</button>
+  </div>
 </header>
 
 <main>
   <div id="home"></div>
 
-  <div class="row" id="states"></div>
-  <div class="row">
-    <input id="search" type="search" placeholder="Search district / ಜಿಲ್ಲೆ ಹುಡುಕಿ">
+  <input id="search" type="search" placeholder="Search district / ಜಿಲ್ಲೆ ಹುಡುಕಿ">
+  <div class="chips" id="chips"></div>
+
+  <div class="tools">
     <select id="sort">
-      <option value="list">Default order</option>
-      <option value="high">Highest farm rate</option>
-      <option value="low">Lowest farm rate</option>
+      <option value="list">Sort: Default</option>
+      <option value="high">Highest rate</option>
+      <option value="low">Lowest rate</option>
       <option value="az">A – Z</option>
     </select>
-    <button id="lang">ಕನ್ನಡ / EN</button>
-    <button id="share">📲 Copy for WhatsApp</button>
+    <button id="share" type="button">📲 Share on WhatsApp</button>
   </div>
 
-  <div class="wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>District</th>
-          <th>Farm ₹/kg</th>
-          <th>Change</th>
-          <th>Wholesale</th>
-          <th>Retail</th>
-          <th>Chick ₹</th>
-        </tr>
-      </thead>
-      <tbody id="body"></tbody>
-    </table>
-    <div id="empty">No district found.</div>
-  </div>
+  <p class="count" id="count"></p>
+  <div class="list" id="list"></div>
+  <div id="empty">No district found.</div>
+
+  <div id="status">Loading rates…</div>
 </main>
-
 <footer id="foot"></footer>
 
-<!-- The rates live in this file. Edit rates.js, not this page. -->
-<script src="rates.js"></script>
 <script>
-  // ---- Read the table from rates.js ----
-  const rows = RATE_TABLE.trim().split("\n").map(l => l.trim()).filter(Boolean).map((line, i) => {
-    const p = line.split("|").map(x => x.trim());
-    return { order:i, state:p[0], name:p[1], kn:p[2], prev:+p[3], farm:+p[4], whole:+p[5], retail:+p[6], chick:+p[7] };
-  });
+  // ====== ONLY THESE 3 LINES MAY NEED CHANGING ======
+  const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTphSTVLmbBqoofGulT2t_zXbxLzBcRbp0h2VRjDzOh8e49uF2Y9cDnT1B13XhEJevz_VAMoUQH_xt-/pub?gid=506287089&single=true&output=csv";
+  const HOME_DISTRICT = "Udupi";
+  const NOTE = "Rates are indicative. Please confirm with your local dealer before selling.";
+  // ==================================================
 
-  const states = ["All", ...new Set(rows.map(r => r.state))];
-  let stateSel = "All", useKn = false;
-
+  let rows = [], DATE = "", stateSel = "All", useKn = false;
   const $ = id => document.getElementById(id);
-  const label = r => useKn ? r.kn : r.name;
-  const diff = r => r.farm - r.prev;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const num = s => { const n = parseFloat(String(s == null ? "" : s).replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; };
 
+  const T = {
+    farm:   ["Farm rate", "ಫಾರ್ಮ್ ದರ"],
+    whole:  ["Wholesale", "ಸಗಟು"],
+    retail: ["Retail", "ಚಿಲ್ಲರೆ"],
+    chick:  ["Chick", "ಮರಿ"],
+    all:    ["All", "ಎಲ್ಲಾ"],
+    today:  ["Today's rate", "ಇಂದಿನ ದರ"]
+  };
+  const t = k => T[k][useKn ? 1 : 0];
+
+  function parseCSV(text) {
+    const out = []; let row = [], cur = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') q = false;
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") { row.push(cur); cur = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(cur); out.push(row); row = []; cur = "";
+      } else cur += c;
+    }
+    if (cur !== "" || row.length) { row.push(cur); out.push(row); }
+    return out;
+  }
+
+  function readSheet(csv) {
+    const data = parseCSV(csv);
+    let d = ((data[0] && data[0][1]) || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const dt = new Date(d);
+      d = (d && !isNaN(dt)) ? dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2) : "";
+    }
+    DATE = d;
+    rows = [];
+    for (let i = 2; i < data.length; i++) {
+      const r = data[i].map(s => (s || "").trim());
+      if (!r[1] || !r[4]) continue;
+      const farm = num(r[4]);
+      rows.push({ order: rows.length, state: r[0] || "Other States", name: r[1], kn: r[2] || r[1],
+        prev: r[3] ? num(r[3]) : farm, farm: farm, whole: num(r[5]), retail: num(r[6]), chick: num(r[7]) });
+    }
+  }
+
+  async function load() {
+    let csv = null, source = "", err = "";
+    try {
+      const res = await fetch(SHEET_URL + (SHEET_URL.indexOf("?") > -1 ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      csv = await res.text();
+      source = "live";
+      try { localStorage.setItem("koli_csv", csv); } catch (e) {}
+    } catch (e) {
+      err = e && e.message ? e.message : String(e);
+      try { csv = localStorage.getItem("koli_csv"); if (csv) source = "saved"; } catch (e2) {}
+    }
+    const st = $("status");
+    if (!csv) { st.className = "bad"; st.textContent = "Could not load rates (" + err + "). Please check the internet and refresh."; return; }
+    readSheet(csv);
+    if (source === "live") { st.className = ""; st.textContent = "✓ Live rates from Google Sheet"; }
+    else { st.className = "bad"; st.textContent = "Showing last saved rates. Could not reach the sheet (" + err + ")."; }
+    $("foot").textContent = NOTE;
+    render();
+  }
+
+  const label = r => useKn ? r.kn : r.name;
   function arrow(r) {
-    const d = diff(r);
-    if (d > 0) return `<span class="up">▲ +${d}</span>`;
-    if (d < 0) return `<span class="dn">▼ ${d}</span>`;
-    return `<span class="same">–</span>`;
+    const d = r.farm - r.prev;
+    if (d > 0) return '<span class="chg up">▲ +' + d + '</span>';
+    if (d < 0) return '<span class="chg dn">▼ ' + d + '</span>';
+    return '<span class="chg same">–</span>';
   }
 
   function visible() {
     const q = $("search").value.trim().toLowerCase();
-    let list = rows.filter(r =>
-      (stateSel === "All" || r.state === stateSel) &&
-      (!q || r.name.toLowerCase().includes(q) || r.kn.includes(q)));
+    const list = rows.filter(r => (stateSel === "All" || r.state === stateSel) &&
+      (!q || r.name.toLowerCase().indexOf(q) > -1 || r.kn.indexOf(q) > -1));
     const s = $("sort").value;
-    if (s === "high") list.sort((a,b) => b.farm - a.farm);
-    if (s === "low")  list.sort((a,b) => a.farm - b.farm);
-    if (s === "az")   list.sort((a,b) => a.name.localeCompare(b.name));
-    if (s === "list") list.sort((a,b) => a.order - b.order);
+    if (s === "high") list.sort((a, b) => b.farm - a.farm);
+    if (s === "low")  list.sort((a, b) => a.farm - b.farm);
+    if (s === "az")   list.sort((a, b) => a.name.localeCompare(b.name));
+    if (s === "list") list.sort((a, b) => a.order - b.order);
     return list;
   }
 
+  function miniBlock(r) {
+    return '<div class="mini">' +
+      '<div><small>' + t("whole") + '</small><b>₹' + r.whole + '</b></div>' +
+      '<div><small>' + t("retail") + '</small><b>₹' + r.retail + '</b></div>' +
+      '<div><small>' + t("chick") + '</small><b>₹' + r.chick + '</b></div></div>';
+  }
+
   function render() {
-    // Home card
-    const h = rows.find(r => r.name.toLowerCase().startsWith(HOME_DISTRICT.toLowerCase()));
-    $("home").innerHTML = h ? `
-      <div class="home">
-        <h2>⭐ ${label(h)} — ${useKn ? "ಇಂದಿನ ದರ" : "Today's rate"}</h2>
-        <div class="grid">
-          <div class="box"><small>${useKn ? "ಫಾರ್ಮ್ ದರ" : "Farm rate"}</small><b>₹${h.farm}</b> ${arrow(h)}</div>
-          <div class="box"><small>${useKn ? "ಸಗಟು" : "Wholesale"}</small><b>₹${h.whole}</b></div>
-          <div class="box"><small>${useKn ? "ಚಿಲ್ಲರೆ" : "Retail"}</small><b>₹${h.retail}</b></div>
-          <div class="box"><small>${useKn ? "ಮರಿ" : "Chick"}</small><b>₹${h.chick}</b></div>
-        </div>
-      </div>` : "";
+    if (DATE) {
+      const dd = new Date(DATE + "T00:00:00");
+      $("sub").textContent = "Daily broiler rates — " + (isNaN(dd) ? DATE : dd.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }));
+    }
+    const h = rows.find(r => r.name.toLowerCase().indexOf(HOME_DISTRICT.toLowerCase()) === 0);
+    $("home").innerHTML = h ? '<div class="home"><h2>⭐ ' + esc(label(h)) + ' — ' + t("today") + '</h2>' +
+      '<div class="big">₹' + h.farm + ' ' + arrow(h) + '</div><small style="color:#64748b">' + t("farm") + ' / kg</small>' + miniBlock(h) + '</div>' : "";
 
-    // State buttons
-    $("states").innerHTML = states.map(s =>
-      `<button class="${s===stateSel?"on":""}" data-s="${s}">${s}</button>`).join("");
+    const states = ["All"].concat(rows.map(r => r.state).filter((v, i, a) => a.indexOf(v) === i));
+    $("chips").innerHTML = states.map(s => '<button class="' + (s === stateSel ? "on" : "") + '" data-s="' + esc(s) + '">' + (s === "All" ? t("all") : esc(s)) + '</button>').join("");
 
-    // Table
     const list = visible();
-    $("body").innerHTML = list.map(r => `
-      <tr class="${h && r===h ? "home-row" : ""}">
-        <td>${label(r)}<span class="sub">${r.state}</span></td>
-        <td><b>₹${r.farm}</b></td>
-        <td>${arrow(r)}</td>
-        <td>₹${r.whole}</td>
-        <td>₹${r.retail}</td>
-        <td>₹${r.chick}</td>
-      </tr>`).join("");
+    $("count").textContent = list.length + " districts";
+    $("list").innerHTML = list.map(r =>
+      '<div class="card' + (h && r === h ? " is-home" : "") + '">' +
+        '<div class="top"><div><div class="name">' + esc(label(r)) + '</div><div class="state">' + esc(r.state) + '</div></div>' +
+        '<div class="price"><b>₹' + r.farm + '</b>' + arrow(r) + '</div></div>' + miniBlock(r) + '</div>').join("");
     $("empty").style.display = list.length ? "none" : "block";
   }
 
-  // ---- Events ----
-  $("states").onclick = e => { if (e.target.dataset.s) { stateSel = e.target.dataset.s; render(); } };
-  $("search").oninput = render;
-  $("sort").onchange = render;
-  $("lang").onclick = () => { useKn = !useKn; render(); };
-  $("share").onclick = () => {
+  $("chips").addEventListener("click", e => { const s = e.target && e.target.getAttribute && e.target.getAttribute("data-s"); if (s) { stateSel = s; render(); } });
+  $("search").addEventListener("input", render);
+  $("sort").addEventListener("change", render);
+  $("lang").addEventListener("click", () => { useKn = !useKn; render(); });
+  $("share").addEventListener("click", () => {
     const list = visible().slice(0, 15);
-    const text = `🐔 *Namma Koli Mandi* — ${DATE}\nFarm rate (₹/kg)\n\n` +
-      list.map(r => `${label(r)}: ₹${r.farm}`).join("\n");
-    navigator.clipboard.writeText(text).then(
-      () => alert("Copied! Paste it in WhatsApp."),
-      () => prompt("Copy this text:", text));
-  };
+    const text = "🐔 *Namma Koli Mandi* — " + DATE + "\nFarm rate (₹/kg)\n\n" + list.map(r => label(r) + ": ₹" + r.farm).join("\n");
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  });
 
-  // ---- Static text ----
-  $("date").textContent = new Date(DATE + "T00:00:00").toLocaleDateString("en-IN",
-    { day:"numeric", month:"short", year:"numeric" });
-  $("foot").textContent = FOOTER_NOTE;
-  render();
+  load();
 </script>
 </body>
 </html>
