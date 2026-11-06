@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Koliva Admin</title>
+<style>
+  :root { --forest:#14532d; --leaf:#2f7d4f; --cream:#f6efdc; --paper:#fffdf8; --egg:#e9a23b; --ink:#1f2a1f; --mut:#6b6a58; --line:#ebe1c4; --dn:#b3261e; --up:#157a3c; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Kannada",sans-serif; background:var(--cream); color:var(--ink); line-height:1.4; }
+  header { background:var(--forest); color:#fff; padding:18px; }
+  header div { max-width:720px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  header h1 { margin:0; font:700 1.4rem Georgia,serif; }
+  header a { color:#fff; font-size:.9rem; }
+  main { max-width:720px; margin:0 auto; padding:16px; }
+  .card { background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; box-shadow:0 2px 8px rgba(80,60,20,.07); }
+  h2 { margin:0 0 6px; font:700 1.15rem Georgia,serif; color:var(--forest); }
+  p.hint { margin:0 0 12px; color:var(--mut); font-size:.88rem; }
+  input, select, textarea, button { font:inherit; }
+  input, select, textarea { width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; background:#fff; margin-bottom:10px; }
+  textarea { min-height:130px; font-family:ui-monospace,Menlo,monospace; font-size:.8rem; }
+  button.pri { background:var(--forest); color:#fff; border:none; border-radius:12px; padding:13px 18px; font-weight:700; width:100%; }
+  button.sec { background:#fff; color:var(--forest); border:1px solid var(--forest); border-radius:10px; padding:8px 12px; font-weight:600; }
+  button.dng { background:#fff; color:var(--dn); border:1px solid var(--dn); border-radius:10px; padding:8px 12px; font-weight:600; }
+  button:disabled { opacity:.5; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .msg { margin-top:10px; font-size:.9rem; font-weight:600; word-break:break-word; }
+  .ok { color:var(--up); } .bad { color:var(--dn); }
+  .member { border-top:1px solid var(--line); padding:12px 0; }
+  .member:first-child { border-top:none; }
+  .mtop { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .mname { font-weight:700; } .mmail { color:var(--mut); font-size:.85rem; word-break:break-all; }
+  .chip { display:inline-block; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700; white-space:nowrap; }
+  .c-ok { background:#e3f4e8; color:var(--up); } .c-warn { background:#fdecc8; color:#9a6200; } .c-bad { background:#fbe5e3; color:var(--dn); } .c-off { background:#eee9d6; color:var(--mut); }
+  .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .stat { color:var(--mut); font-size:.85rem; margin-bottom:8px; }
+</style>
+</head>
+<body>
+<header><div><h1>Koliva Admin</h1><a href="index.html">← View site</a></div></header>
+<main>
+  <div class="card" id="gate">
+    <h2>Admin sign-in</h2>
+    <p class="hint">Only the admin Google account can use this page.</p>
+    <button class="pri" id="signin" type="button">Sign in with Google</button>
+    <div class="msg bad" id="gerr"></div>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="card">
+      <h2>1. Update today's rates</h2>
+      <p class="hint">In your Google Sheet, select all cells and copy. Paste them here. The "Yesterday" column is filled in automatically from the last saved rates.</p>
+      <textarea id="paste" placeholder="Paste your sheet here (Date row, header row, then districts)"></textarea>
+      <div class="stat" id="pv"></div>
+      <button class="pri" id="saveRates" type="button" disabled>Save rates</button>
+      <div class="msg" id="rmsg"></div>
+      <div class="stat" id="cur" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Add a member</h2>
+      <p class="hint">After they pay you, add their Gmail. Access starts straight away.</p>
+      <input id="mEmail" type="email" placeholder="member@gmail.com" autocapitalize="none">
+      <div class="row2">
+        <input id="mName" type="text" placeholder="Name (optional)">
+        <select id="mDays"><option value="30">30 days</option><option value="90">90 days</option><option value="180">180 days</option><option value="365">365 days</option></select>
+      </div>
+      <button class="pri" id="addM" type="button">Add member</button>
+      <div class="msg" id="mmsg"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Members</h2>
+      <div class="stat" id="mstat"></div>
+      <div id="mlist"></div>
+    </div>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const K = window.KOLIVA;
+  const app = initializeApp(K.firebase), auth = getAuth(app), db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const say = (id, text, ok) => { const e = $(id); e.textContent = text; e.className = "msg " + (ok ? "ok" : "bad"); };
+  const fmt = d => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const DAY = 86400000;
+  let parsed = null;
+
+  function parseCSV(text) {
+    const out = []; let row = [], cur = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { row.push(cur); cur = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cur); out.push(row); row = []; cur = ""; }
+      else cur += c;
+    }
+    if (cur !== "" || row.length) { row.push(cur); out.push(row); }
+    return out;
+  }
+
+  function parsePaste(text) {
+    const grid = text.indexOf("\t") > -1 ? text.replace(/\r/g, "").split("\n").map(l => l.split("\t")) : parseCSV(text);
+    let date = "", start = -1;
+    grid.forEach((r, i) => {
+      const a = (r[0] || "").trim().toLowerCase();
+      if (a === "date" && !date) date = (r[1] || "").trim();
+      if (a === "state" && start < 0) start = i + 1;
+    });
+    if (start < 0) return { error: "Could not find the header row that starts with 'State'." };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const dt = new Date(date);
+      date = (date && !isNaN(dt)) ? dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2) : "";
+    }
+    if (!date) return { error: "Could not read the date. Put it in the 'Date' row as 2026-11-06." };
+    const list = [];
+    for (let i = start; i < grid.length; i++) {
+      const r = grid[i].map(s => (s || "").trim());
+      if (!r[1] || !r[4]) continue;
+      list.push({ state: r[0] || "Other States", name: r[1], kn: r[2] || r[1], farm: r[4], whole: r[5] || "0", retail: r[6] || "0", chick: r[7] || "0" });
+    }
+    if (!list.length) return { error: "No districts found under the header row." };
+    return { date: date, list: list };
+  }
+
+  $("paste").addEventListener("input", () => {
+    const v = $("paste").value.trim();
+    parsed = null; $("saveRates").disabled = true; $("rmsg").textContent = "";
+    if (!v) { $("pv").textContent = ""; return; }
+    const p = parsePaste(v);
+    if (p.error) { $("pv").textContent = p.error; $("pv").className = "stat bad"; return; }
+    parsed = p; $("pv").className = "stat ok";
+    $("pv").textContent = "Ready: " + p.list.length + " districts for " + p.date + ".";
+    $("saveRates").disabled = false;
+  });
+
+  async function showCurrent() {
+    try {
+      const s = await getDoc(doc(db, "rates", "current"));
+      $("cur").textContent = s.exists() ? "Currently published: " + (s.data().date || "?") + " (" + (s.data().table || "").split("\n").filter(Boolean).length + " districts)" : "Nothing published yet.";
+    } catch (e) { $("cur").textContent = "Could not read current rates: " + (e.code || e.message); }
+  }
+
+  $("saveRates").onclick = async () => {
+    if (!parsed) return;
+    $("saveRates").disabled = true; say("rmsg", "Saving…", true);
+    try {
+      const old = await getDoc(doc(db, "rates", "current"));
+      const oldMap = {}; let oldDate = "";
+      if (old.exists()) {
+        oldDate = old.data().date || "";
+        (old.data().table || "").split("\n").forEach(line => { const p = line.split("|").map(s => s.trim()); if (p[1]) oldMap[p[1].toLowerCase()] = { prev: p[3], farm: p[4] }; });
+      }
+      const lines = parsed.list.map(r => {
+        const o = oldMap[r.name.toLowerCase()];
+        const prev = o ? (oldDate !== parsed.date ? o.farm : o.prev) : r.farm;
+        return [r.state, r.name, r.kn, prev, r.farm, r.whole, r.retail, r.chick].join(" | ");
+      });
+      await setDoc(doc(db, "rates", "current"), { date: parsed.date, table: lines.join("\n"), updatedAt: serverTimestamp() });
+      say("rmsg", "Saved " + lines.length + " districts for " + parsed.date + ".", true);
+      $("paste").value = ""; $("pv").textContent = ""; parsed = null;
+      showCurrent();
+    } catch (e) { say("rmsg", "Could not save: " + (e.code || e.message), false); $("saveRates").disabled = false; }
+  };
+
+  function status(m) {
+    const exp = m.expiresAt && m.expiresAt.toDate ? m.expiresAt.toDate() : null, now = Date.now();
+    if (m.active === false) return ["Off", "c-off"];
+    if (!exp || exp.getTime() < now) return ["Expired", "c-bad"];
+    const left = Math.ceil((exp.getTime() - now) / DAY);
+    return [left <= 5 ? "Ends in " + left + "d" : "Active", left <= 5 ? "c-warn" : "c-ok"];
+  }
+
+  async function loadMembers() {
+    try {
+      const snap = await getDocs(collection(db, "members"));
+      const list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      list.sort((a, b) => ((a.expiresAt && a.expiresAt.toDate ? a.expiresAt.toDate().getTime() : 0) - (b.expiresAt && b.expiresAt.toDate ? b.expiresAt.toDate().getTime() : 0)));
+      const active = list.filter(m => status(m)[1] === "c-ok" || status(m)[1] === "c-warn").length;
+      $("mstat").textContent = list.length + " members · " + active + " active";
+      $("mlist").innerHTML = list.length ? list.map(m => {
+        const s = status(m), exp = m.expiresAt && m.expiresAt.toDate ? fmt(m.expiresAt.toDate()) : "—";
+        return '<div class="member"><div class="mtop"><div><div class="mname">' + esc(m.name || m.id) + '</div><div class="mmail">' + esc(m.id) + '</div><div class="mmail">Until ' + exp + '</div></div><span class="chip ' + s[1] + '">' + s[0] + '</span></div>' +
+          '<div class="acts"><button class="sec" data-a="ext" data-id="' + esc(m.id) + '">+30 days</button><button class="sec" data-a="tog" data-id="' + esc(m.id) + '">' + (m.active === false ? "Turn on" : "Turn off") + '</button><button class="dng" data-a="del" data-id="' + esc(m.id) + '">Remove</button></div></div>';
+      }).join("") : '<p class="hint">No members yet.</p>';
+      window.__members = list;
+    } catch (e) { $("mstat").textContent = "Could not load members: " + (e.code || e.message); }
+  }
+
+  $("mlist").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const id = b.getAttribute("data-id"), a = b.getAttribute("data-a"), m = (window.__members || []).find(x => x.id === id);
+    if (!m) return;
+    try {
+      if (a === "ext") {
+        const cur = m.expiresAt && m.expiresAt.toDate ? m.expiresAt.toDate().getTime() : 0;
+        await updateDoc(doc(db, "members", id), { expiresAt: Timestamp.fromDate(new Date(Math.max(cur, Date.now()) + 30 * DAY)), active: true });
+      } else if (a === "tog") {
+        await updateDoc(doc(db, "members", id), { active: m.active === false });
+      } else if (a === "del") {
+        if (!confirm("Remove " + id + "? They will lose access immediately.")) return;
+        await deleteDoc(doc(db, "members", id));
+      }
+      loadMembers();
+    } catch (err) { say("mmsg", "Action failed: " + (err.code || err.message), false); }
+  });
+
+  $("addM").onclick = async () => {
+    const email = $("mEmail").value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say("mmsg", "Please enter a valid email.", false); return; }
+    const days = parseInt($("mDays").value, 10) || 30;
+    try {
+      await setDoc(doc(db, "members", email), { email: email, name: $("mName").value.trim(), active: true, expiresAt: Timestamp.fromDate(new Date(Date.now() + days * DAY)), addedAt: serverTimestamp() });
+      say("mmsg", "Added " + email + " for " + days + " days.", true);
+      $("mEmail").value = ""; $("mName").value = ""; loadMembers();
+    } catch (e) { say("mmsg", "Could not add: " + (e.code || e.message), false); }
+  };
+
+  $("signin").onclick = async () => {
+    $("gerr").textContent = "";
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { $("gerr").textContent = "Sign-in problem: " + (e.code || e.message); }
+  };
+
+  onAuthStateChanged(auth, user => {
+    const ok = user && (user.email || "").toLowerCase() === K.ADMIN_EMAIL.toLowerCase();
+    $("panel").hidden = !ok; $("gate").hidden = !!ok;
+    if (user && !ok) {
+      $("gate").hidden = false;
+      $("gerr").innerHTML = esc(user.email) + " is not the admin account. ";
+      const b = document.createElement("button"); b.className = "sec"; b.textContent = "Sign out"; b.onclick = () => signOut(auth); $("gerr").appendChild(b);
+    }
+    if (ok) { showCurrent(); loadMembers(); }
+  });
+</script>
+</body>
+</html>
